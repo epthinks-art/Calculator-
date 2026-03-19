@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commission & Budget Calculator — Dell Technologies</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: linear-gradient(160deg, #0a1628 0%, #0f1f3d 40%, #0a1628 100%); color: white; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  
+  input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); outline: none; cursor: pointer; flex: 1; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #00D1A0; cursor: pointer; border: 2px solid #0a1628; }
+  input[type=number] { -moz-appearance: textfield; }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 20px rgba(0,209,160,0.15); } 50% { box-shadow: 0 0 30px rgba(0,209,160,0.3); } }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 12px; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #00D1A0, #00B890); display: flex; align-items: center; justify-content: center; font-family: 'Sora'; font-weight: 700; font-size: 16px; color: #0a1628; flex-shrink: 0; }
+  .title { font-family: 'Sora'; font-size: 20px; font-weight: 700; }
+  .subtitle { font-family: 'DM Sans'; font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .date-tag { padding: 6px 14px; border-radius: 20px; background: rgba(255,255,255,0.06); font-size: 12px; color: rgba(255,255,255,0.5); }
+
+  .top-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 18px 16px; animation: fadeUp 0.5s ease; }
+  .stat-card.glow { animation: fadeUp 0.5s ease, pulseGlow 3s ease-in-out infinite; }
+  .stat-label { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-family: 'Sora'; font-size: 26px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 4px; }
+  .tab { flex: 1; padding: 10px 16px; border: none; border-radius: 10px; background: transparent; color: rgba(255,255,255,0.5); font-family: 'Sora'; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+  .tab.active { background: rgba(0,209,160,0.12); color: #00D1A0; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.04); }
+
+  .tab-content { display: none; animation: fadeUp 0.3s ease; }
+  .tab-content.active { display: block; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  .panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; }
+  .panel-title { font-family: 'Sora'; font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 16px; }
+
+  .input-row { margin-bottom: 14px; }
+  .input-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .input-control { display: flex; align-items: center; gap: 8px; }
+  .input-prefix { font-family: 'Sora'; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.3); width: 18px; text-align: center; flex-shrink: 0; }
+  .num-input { width: 90px; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.05); color: white; font-family: 'Sora'; font-size: 14px; font-weight: 600; outline: none; text-align: right; flex-shrink: 0; transition: border-color 0.2s; }
+  .num-input:focus { border-color: #00D1A0; background: rgba(0,209,160,0.06); }
+
+  .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 16px 0; }
+
+  .breakdown-item { margin-bottom: 16px; }
+  .breakdown-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .breakdown-label { font-size: 14px; color: rgba(255,255,255,0.6); }
+  .breakdown-value { font-family: 'Sora'; font-size: 16px; font-weight: 600; }
+  .breakdown-bar { height: 8px; border-radius: 4px; min-width: 4px; transition: width 0.5s ease; }
+
+  .quota-box { margin-top: 20px; padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+  .quota-label { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .quota-meter { height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+  .quota-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease, background 0.3s ease; }
+  .quota-text { font-size: 13px; color: rgba(255,255,255,0.6); }
+
+  .expense-bar-wrap { margin-bottom: 14px; }
+  .expense-bar-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .expense-bar-name { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .expense-bar-val { font-family: 'Sora'; font-size: 13px; font-weight: 600; }
+  .expense-bar-track { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+  .expense-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .expense-bar-pct { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .scenario-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px; transition: border-color 0.3s; }
+  .scenario-card.highlight { border-color: #00D1A0; }
+  .scenario-name { font-family: 'Sora'; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 4px; }
+  .scenario-sales { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+  .scenario-row { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+  .scenario-annual { text-align: center; margin-top: 4px; }
+  .scenario-annual-val { font-family: 'Sora'; font-size: 22px; font-weight: 700; }
+  .scenario-annual-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+  .cf-section { flex: 1; min-width: 200px; }
+  .cf-title { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .cf-row { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+  .cf-total { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px; font-weight: 700; }
+  .cf-net-box { flex: 1; min-width: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,209,160,0.06); border-radius: 12px; padding: 20px; }
+  .cf-net-label { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+  .cf-net-value { font-family: 'Sora'; font-size: 36px; font-weight: 700; }
+  .cf-net-sub { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+  .cf-badge { margin-top: 12px; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+  .summary-wrap { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px; }
+  .green { color: #00D1A0; }
+  .red { color: #FF6B6B; }
+  .yellow { color: #F7DC6F; }
+  .blue { color: #45B7D1; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">R1</div>
+    <div>
+      <div class="title">Commission & Budget Calculator</div>
+      <div class="subtitle">Dell Technologies — Inside Sales</div>
+    </div>
+  </div>
+  <div class="date-tag">March 2026</div>
+</div>
+
+<!-- Top Cards -->
+<div class="top-cards">
+  <div class="stat-card glow">
+    <div class="stat-label">Monthly Take-Home</div>
+    <div class="stat-value" id="card-net">$0</div>
+    <div class="stat-sub" id="card-savings">0% savings rate</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Monthly Income</div>
+    <div class="stat-value" id="card-income">$0</div>
+    <div class="stat-sub">Base + Commission + Bonus</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Monthly Expenses</div>
+    <div class="stat-value red" id="card-expenses">$0</div>
+    <div class="stat-sub">10 categories</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Projected Annual</div>
+    <div class="stat-value" id="card-annual">$0</div>
+    <div class="stat-sub">At current pace</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('income')">&#x1F4B0; Income</button>
+  <button class="tab" onclick="switchTab('expenses')">&#x1F4CA; Expenses</button>
+  <button class="tab" onclick="switchTab('scenarios')">&#x1F3AF; Scenarios</button>
+</div>
+
+<!-- INCOME TAB -->
+<div class="tab-content active" id="tab-income">
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Base & Commission</div>
+      <div class="input-row">
+        <div class="input-label">Annual Base Salary</div>
+        <div class="input-control">
+          <span class="input-prefix">$</span>
+          <input type="number" class="num-input" id="baseSalary" value="45000" min="0" max="120000" step="1000">
+          <input type="range" id="baseSalaryRange" value="45000" min="0" max="120000" step="1000">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-label">Commission Rate</div>
+        <div class="input-control">
+          <span class="input-prefix">%</span>
+          <input type="number" class="num-input" id="commRate" value="8" min="0" max="25" step="0.5">
+          <input type="range" id="commRateRange" value="8" min="0" max="25" step="0.5">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-label">Monthly Sales Volume</div>
+        <div class="input-control">
+          <span class="input-prefix">$</span>
+          <input type="number" class="num-input" id="monthlySales" value="50000" min="0" max="200000" step="1000">
+          <input type="range" id="monthlySalesRange" value="50000" min="0" max="200000" step="1000">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="panel-title">Bonus Structure</div>
+      <div class="input-row">
+        <div class="input-label">Quota Attainment</div>
+        <div class="input-control">
+          <span class="input-prefix">%</span>
+          <input type="number" class="num-input" id="quotaAtt" value="100" min="0" max="200" step="5">
+          <input type="range" id="quotaAttRange" value="100" min="0" max="200" step="5">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-label">Quarterly Bonus Amount</div>
+        <div class="input-control">
+          <span class="input-prefix">$</span>
+          <input type="number" class="num-input" id="bonusAmt" value="2000" min="0" max="10000" step="100">
+          <input type="range" id="bonusAmtRange" value="2000" min="0" max="10000" step="100">
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Income Breakdown</div>
+      <div class="breakdown-item">
+        <div class="breakdown-row">
+          <span class="breakdown-label">Base Pay</span>
+          <span class="breakdown-value" id="bd-base">$0</span>
+        </div>
+        <div class="breakdown-bar" id="bd-base-bar" style="background: linear-gradient(90deg, #45B7D1, #4ECDC4); width: 50%;"></div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-row">
+          <span class="breakdown-label">Commission</span>
+          <span class="breakdown-value" id="bd-comm">$0</span>
+        </div>
+        <div class="breakdown-bar" id="bd-comm-bar" style="background: linear-gradient(90deg, #00D1A0, #00E6B0); width: 50%;"></div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-row">
+          <span class="breakdown-label">Bonus</span>
+          <span class="breakdown-value" id="bd-bonus">$0</span>
+        </div>
+        <div class="breakdown-bar" id="bd-bonus-bar" style="background: linear-gradient(90deg, #F7DC6F, #F0C040); width: 10%;"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="breakdown-row" style="margin-top: 12px;">
+        <span class="breakdown-label" style="font-weight: 700; font-size: 16px;">Total Monthly</span>
+        <span class="breakdown-value green" style="font-size: 24px;" id="bd-total">$0</span>
+      </div>
+      <div class="quota-box">
+        <div class="quota-label">Quota Status</div>
+        <div class="quota-meter"><div class="quota-fill" id="quota-fill"></div></div>
+        <div class="quota-text" id="quota-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSES TAB -->
+<div class="tab-content" id="tab-expenses">
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Monthly Expenses</div>
+      <div id="expense-inputs"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Expense Distribution</div>
+      <div id="expense-bars"></div>
+      <div class="divider"></div>
+      <div class="breakdown-row">
+        <span style="font-family: 'Sora'; font-weight: 700; font-size: 15px; color: rgba(255,255,255,0.9);">Total Expenses</span>
+        <span class="red" style="font-family: 'Sora'; font-weight: 700; font-size: 20px;" id="exp-total">$0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENARIOS TAB -->
+<div class="tab-content" id="tab-scenarios">
+  <div class="panel">
+    <div class="panel-title">Commission Scenarios — What If Your Sales Change?</div>
+    <div class="scenario-grid" id="scenario-grid"></div>
+  </div>
+  <div class="panel" style="margin-top: 16px;">
+    <div class="panel-title">Monthly Cash Flow Summary</div>
+    <div class="summary-wrap" id="summary-wrap"></div>
+  </div>
+</div>
+
+<script>
+// ---- DATA ----
+const expenseConfig = [
+  { id: "rent", label: "Rent", value: 1400, max: 3000, step: 50, color: "#FF6B6B" },
+  { id: "truck", label: "Truck Payment", value: 450, max: 1500, step: 25, color: "#4ECDC4" },
+  { id: "insurance", label: "Insurance", value: 200, max: 500, step: 10, color: "#45B7D1" },
+  { id: "groceries", label: "Groceries", value: 350, max: 800, step: 25, color: "#96CEB4" },
+  { id: "gas", label: "Gas", value: 150, max: 400, step: 10, color: "#FFEAA7" },
+  { id: "phone", label: "Phone", value: 80, max: 200, step: 5, color: "#DDA0DD" },
+  { id: "subs", label: "Subscriptions", value: 50, max: 200, step: 5, color: "#98D8C8" },
+  { id: "gym", label: "Gym", value: 40, max: 150, step: 5, color: "#F7DC6F" },
+  { id: "cc", label: "CC Payment", value: 200, max: 1000, step: 25, color: "#BB8FCE" },
+  { id: "misc", label: "Misc/Fun", value: 150, max: 500, step: 10, color: "#85C1E9" },
+];
+
+const fmt = (n) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+// ---- BUILD EXPENSE INPUTS ----
+function buildExpenseInputs() {
+  const container = document.getElementById("expense-inputs");
+  container.innerHTML = "";
+  expenseConfig.forEach(exp => {
+    container.innerHTML += `
+      <div class="input-row">
+        <div class="input-label">${exp.label}</div>
+        <div class="input-control">
+          <span class="input-prefix">$</span>
+          <input type="number" class="num-input" id="exp_${exp.id}" value="${exp.value}" min="0" max="${exp.max}" step="${exp.step}">
+          <input type="range" id="exp_${exp.id}_range" value="${exp.value}" min="0" max="${exp.max}" step="${exp.step}">
+        </div>
+      </div>`;
+  });
+  // Attach listeners after building
+  expenseConfig.forEach(exp => {
+    const numInput = document.getElementById(`exp_${exp.id}`);
+    const rangeInput = document.getElementById(`exp_${exp.id}_range`);
+    numInput.addEventListener("input", () => { rangeInput.value = numInput.value; recalc(); });
+    rangeInput.addEventListener("input", () => { numInput.value = rangeInput.value; recalc(); });
+  });
+}
+
+// ---- SYNC HELPERS ----
+function linkInputs(numId, rangeId) {
+  const num = document.getElementById(numId);
+  const range = document.getElementById(rangeId);
+  num.addEventListener("input", () => { range.value = num.value; recalc(); });
+  range.addEventListener("input", () => { num.value = range.value; recalc(); });
+}
+
+// ---- TAB SWITCHING ----
+function switchTab(tabName) {
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab-" + tabName).classList.add("active");
+  document.querySelectorAll(".tab").forEach(el => {
+    if (el.textContent.toLowerCase().includes(tabName)) el.classList.add("active");
+  });
+  recalc();
+}
+
+// ---- MAIN CALCULATION ----
+function recalc() {
+  const baseSalary = Number(document.getElementById("baseSalary").value) || 0;
+  const commRate = Number(document.getElementById("commRate").value) || 0;
+  const monthlySales = Number(document.getElementById("monthlySales").value) || 0;
+  const quotaAtt = Number(document.getElementById("quotaAtt").value) || 0;
+  const bonusAmt = Number(document.getElementById("bonusAmt").value) || 0;
+
+  const monthlyBase = baseSalary / 12;
+  const monthlyComm = monthlySales * (commRate / 100);
+  const monthlyBonus = quotaAtt >= 100 ? bonusAmt : quotaAtt >= 80 ? bonusAmt * 0.5 : 0;
+  const totalIncome = monthlyBase + monthlyComm + monthlyBonus;
+  const annualIncome = totalIncome * 12;
+
+  // Expenses
+  let totalExp = 0;
+  const expValues = [];
+  expenseConfig.forEach(exp => {
+    const v = Number(document.getElementById(`exp_${exp.id}`).value) || 0;
+    totalExp += v;
+    expValues.push({ ...exp, value: v });
+  });
+
+  const netMonthly = totalIncome - totalExp;
+  const savingsRate = totalIncome > 0 ? (netMonthly / totalIncome) * 100 : 0;
+
+  // Top cards
+  const netEl = document.getElementById("card-net");
+  netEl.textContent = fmt(netMonthly);
+  netEl.style.color = netMonthly >= 0 ? "#00D1A0" : "#FF6B6B";
+  document.getElementById("card-savings").textContent = savingsRate.toFixed(1) + "% savings rate";
+  document.getElementById("card-income").textContent = fmt(totalIncome);
+  document.getElementById("card-expenses").textContent = fmt(totalExp);
+  document.getElementById("card-annual").textContent = fmt(annualIncome);
+
+  // Income breakdown
+  document.getElementById("bd-base").textContent = fmt(monthlyBase);
+  document.getElementById("bd-comm").textContent = fmt(monthlyComm);
+  document.getElementById("bd-bonus").textContent = fmt(monthlyBonus);
+  document.getElementById("bd-total").textContent = fmt(totalIncome);
+
+  if (totalIncome > 0) {
+    document.getElementById("bd-base-bar").style.width = (monthlyBase / totalIncome * 100) + "%";
+    document.getElementById("bd-comm-bar").style.width = (monthlyComm / totalIncome * 100) + "%";
+    document.getElementById("bd-bonus-bar").style.width = (monthlyBonus / totalIncome * 100) + "%";
+  }
+
+  // Quota
+  const qFill = document.getElementById("quota-fill");
+  qFill.style.width = Math.min(quotaAtt, 200) / 2 + "%";
+  qFill.style.background = quotaAtt >= 100 ? "linear-gradient(90deg, #00D1A0, #00E6B0)" : quotaAtt >= 80 ? "linear-gradient(90deg, #F7DC6F, #F0C040)" : "linear-gradient(90deg, #FF6B6B, #FF4757)";
+  document.getElementById("quota-text").textContent = quotaAtt >= 100 ? "\u2705 Full bonus unlocked!" : quotaAtt >= 80 ? "\u26A0\uFE0F 50% bonus (80%+ attainment)" : "\u274C No bonus (below 80%)";
+
+  // Expense bars
+  const sorted = [...expValues].sort((a, b) => b.value - a.value);
+  const maxExp = Math.max(...sorted.map(e => e.value), 1);
+  const barsContainer = document.getElementById("expense-bars");
+  barsContainer.innerHTML = "";
+  sorted.forEach(exp => {
+    const pct = totalExp > 0 ? ((exp.value / totalExp) * 100).toFixed(1) : "0";
+    const barW = (exp.value / maxExp * 100);
+    barsContainer.innerHTML += `
+      <div class="expense-bar-wrap">
+        <div class="expense-bar-header">
+          <span class="expense-bar-name">${exp.label}</span>
+          <span class="expense-bar-val">${fmt(exp.value)}</span>
+        </div>
+        <div class="expense-bar-track"><div class="expense-bar-fill" style="width: ${barW}%; background: ${exp.color};"></div></div>
+        <div class="expense-bar-pct">${pct}% of total</div>
+      </div>`;
+  });
+  document.getElementById("exp-total").textContent = fmt(totalExp);
+
+  // Scenarios
+  const scenarios = [
+    { label: "Slow Month", mult: 0.6 },
+    { label: "Average", mult: 1.0 },
+    { label: "Crushing It", mult: 1.4 },
+    { label: "Top Rep", mult: 2.0 },
+  ];
+  const sgrid = document.getElementById("scenario-grid");
+  sgrid.innerHTML = "";
+  scenarios.forEach((s, i) => {
+    const sales = monthlySales * s.mult;
+    const comm = sales * (commRate / 100);
+    const total = monthlyBase + comm + monthlyBonus;
+    const net = total - totalExp;
+    sgrid.innerHTML += `
+      <div class="scenario-card ${i === 3 ? 'highlight' : ''}">
+        <div class="scenario-name">${s.label}</div>
+        <div class="scenario-sales">${fmt(sales)}/mo sales</div>
+        <div class="divider"></div>
+        <div class="scenario-row"><span>Commission</span><span class="green">${fmt(comm)}</span></div>
+        <div class="scenario-row"><span>Total Income</span><span>${fmt(total)}</span></div>
+        <div class="scenario-row"><span>After Expenses</span><span style="color: ${net >= 0 ? '#00D1A0' : '#FF6B6B'}; font-weight: 700;">${fmt(net)}</span></div>
+        <div class="divider"></div>
+        <div class="scenario-annual">
+          <div class="scenario-annual-val" style="color: ${net >= 0 ? '#00D1A0' : '#FF6B6B'}">${fmt(net * 12)}</div>
+          <div class="scenario-annual-label">annual net</div>
+        </div>
+      </div>`;
+  });
+
+  // Cash flow summary
+  const top5 = sorted.slice(0, 5);
+  const sw = document.getElementById("summary-wrap");
+  let badgeColor, badgeBg, badgeText;
+  if (savingsRate >= 20) { badgeColor = "#00D1A0"; badgeBg = "rgba(0,209,160,0.15)"; badgeText = "\uD83D\uDD25 Great savings rate"; }
+  else if (savingsRate >= 10) { badgeColor = "#F7DC6F"; badgeBg = "rgba(247,220,111,0.15)"; badgeText = "\uD83D\uDC4D Decent — push for 20%"; }
+  else { badgeColor = "#FF6B6B"; badgeBg = "rgba(255,107,107,0.15)"; badgeText = "\u26A0\uFE0F Tight — find cuts"; }
+
+  sw.innerHTML = `
+    <div class="cf-section">
+      <div class="cf-title">Income Sources</div>
+      <div class="cf-row"><span>Base Pay</span><span class="blue">${fmt(monthlyBase)}</span></div>
+      <div class="cf-row"><span>Commission</span><span class="green">${fmt(monthlyComm)}</span></div>
+      <div class="cf-row"><span>Bonus</span><span class="yellow">${fmt(monthlyBonus)}</span></div>
+      <div class="cf-row cf-total"><span>Total In</span><span class="green">${fmt(totalIncome)}</span></div>
+    </div>
+    <div class="cf-section">
+      <div class="cf-title">Top 5 Expenses</div>
+      ${top5.map(e => `<div class="cf-row"><span>${e.label}</span><span class="red">-${fmt(e.value)}</span></div>`).join("")}
+      <div class="cf-row cf-total"><span>Total Out</span><span class="red">-${fmt(totalExp)}</span></div>
+    </div>
+    <div class="cf-net-box">
+      <div class="cf-net-label">NET MONTHLY</div>
+      <div class="cf-net-value" style="color: ${netMonthly >= 0 ? '#00D1A0' : '#FF6B6B'}">${fmt(netMonthly)}</div>
+      <div class="cf-net-sub">${fmt(netMonthly * 12)} annually</div>
+      <div class="cf-badge" style="background: ${badgeBg}; color: ${badgeColor};">${badgeText}</div>
+    </div>`;
+}
+
+// ---- INIT ----
+buildExpenseInputs();
+
+// Link income inputs (number <-> range sync)
+linkInputs("baseSalary", "baseSalaryRange");
+linkInputs("commRate", "commRateRange");
+linkInputs("monthlySales", "monthlySalesRange");
+linkInputs("quotaAtt", "quotaAttRange");
+linkInputs("bonusAmt", "bonusAmtRange");
+
+// Initial calc
+recalc();
+</script>
+</body>
+</html>
